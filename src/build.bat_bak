@@ -1,0 +1,6 @@
+cd bin.client
+rustc bin.client.rs
+cd ..
+cd bin.server
+rustc bin.server.rs
+cd ..

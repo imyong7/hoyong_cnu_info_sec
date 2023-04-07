@@ -1,0 +1,1 @@
+rustc ./client/client.rs && rustc ./server/server.rs
