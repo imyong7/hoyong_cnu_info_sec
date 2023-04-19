@@ -3,7 +3,7 @@ use std::net::{TcpListener, TcpStream, Shutdown};
 use std::io::{Read, Write};
 use std::str::from_utf8;
 
-use aes::Aes256;
+use aes::Aes128;
 use aes::cipher::{
     BlockCipher, BlockEncrypt, BlockDecrypt, KeyInit,
     generic_array::GenericArray,
@@ -14,10 +14,11 @@ fn handle_client(mut stream: TcpStream) {
     let mut data = [0 as u8; 65536];
     while match stream.read(&mut data) {
         Ok(size) => {
-            let text = from_utf8(&data[0..size]).unwrap();
-            println!("From client data :: {}", text);
+            // let text = from_utf8(&data[0..size]).unwrap();
+            println!("From client data / size :: {:?}, {}", &data[0..size], size);
 
-            stream.write(&data[0..size]).unwrap();
+            stream.write(&data[0..size]);
+            // stream.write(&data[0..size]).unwrap();
             true
         },
         Err(e) => {
@@ -33,11 +34,10 @@ fn main() {
     println!("Server listening on port 3333");
 
     // Key generate
-    let key = GenericArray::from([0u8; 32]);
-    let mut block = GenericArray::from([42u8; 32]);
+    let key = GenericArray::from([0u8; 16]);
 
     // Initialize cipher
-    let cipher = Aes256::new(&key);
+    let cipher = Aes128::new(&key);
 
     for stream in listener.incoming() {
         match stream {
