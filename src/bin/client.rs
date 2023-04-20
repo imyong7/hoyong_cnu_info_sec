@@ -153,7 +153,7 @@ fn main() {
 
                 cipher.encrypt_blocks(&mut blocks);
 
-                // 블록의 형타입 변환 후 서버로 전송
+                // 블록의 형타입 변환
                 let mut _block = [0 as u8; 1024]; // 블록 버퍼 zero-fill
                 let mut index = 0;
                 for block in blocks.iter() { // 배열에 블록 바이트 값 할당
