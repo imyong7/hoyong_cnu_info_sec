@@ -17,3 +17,6 @@
 - bin/build/client.exe
 - bin/build/client2.exe 
 ```
+
+# 중간고사 - AES 암호화 방식으로 암호화 통신
+# 기말고사 - 하이브리드 암호화 방식을 통한 암호화 통신
