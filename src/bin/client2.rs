@@ -201,18 +201,18 @@ fn main() {
             println!("Successfully connected to server in port 3333");
 
             // loop {
-                let mut client_data = vec![0 as u8; 1];
-                match stream.read(&mut client_data) {
-                    Ok(_) => {
-                        if client_data[0] == 2 {
-                            println!("{:?} clients connected!\n", client_data);
-                            // break;
-                        }
-                    }
-                    Err(_) => {
-                        // println!("error");
+            let mut client_data = vec![0 as u8; 1];
+            match stream.read(&mut client_data) {
+                Ok(_) => {
+                    if client_data[0] == 2 {
+                        println!("{:?} clients connected!\n", client_data);
+                        // break;
                     }
                 }
+                Err(_) => {
+                    // println!("error");
+                }
+            }
             // }
 
             println!("Key distribution in progress...");
@@ -235,21 +235,21 @@ fn main() {
             // 수신한 상대방의 공개키 수신
             let mut recv_rsa_pub_key_data = [0 as u8; 294];
             // loop {
-                match stream.read(&mut recv_rsa_pub_key_data) {
-                    Ok(_) => {
-                        if public_key_bytes.as_bytes() != recv_rsa_pub_key_data {
-                            println!("recv_public_key :: {:?}, {:?}\n", recv_rsa_pub_key_data, recv_rsa_pub_key_data.len());
+            match stream.read(&mut recv_rsa_pub_key_data) {
+                Ok(_) => {
+                    if public_key_bytes.as_bytes() != recv_rsa_pub_key_data {
+                        println!("recv_public_key :: {:?}, {:?}\n", recv_rsa_pub_key_data, recv_rsa_pub_key_data.len());
 
-                            // 수신받은 공개키로 교체
-                            recv_public_key = RsaPublicKey::from_public_key_der(&*recv_rsa_pub_key_data.to_vec()).unwrap();
-                            println!("public_key :: {:?}, {:?}\n", &public_key_bytes.as_bytes(), &public_key_bytes.as_bytes().len());
-                            // break;
-                        }
-                    }
-                    Err(_) => {
-                        println!("error");
+                        // 수신받은 공개키로 교체
+                        recv_public_key = RsaPublicKey::from_public_key_der(&*recv_rsa_pub_key_data.to_vec()).unwrap();
+                        println!("public_key :: {:?}, {:?}\n", &public_key_bytes.as_bytes(), &public_key_bytes.as_bytes().len());
+                        // break;
                     }
                 }
+                Err(_) => {
+                    println!("error");
+                }
+            }
             // }
             // thread::sleep(time::Duration::from_millis(3000));
 
@@ -280,33 +280,33 @@ fn main() {
             // 교환된 상대방의 대칭키 수신
             let mut recv_key_data = vec![0 as u8; 256];
             // loop {
-                match stream.read(&mut recv_key_data) {
-                    Ok(_) => {
-                        if rsa_enc_aes_key != recv_key_data {
-                            println!("recv_key_data :: {:?}, {:?}\n", recv_key_data, recv_key_data.len());
+            match stream.read(&mut recv_key_data) {
+                Ok(_) => {
+                    if rsa_enc_aes_key != recv_key_data {
+                        println!("recv_key_data :: {:?}, {:?}\n", recv_key_data, recv_key_data.len());
 
-                            // 개인키로 복호화
-                            let dec_key = private_key.decrypt(Pkcs1v15Encrypt, &recv_key_data).expect("failed to decrypt");
+                        // 개인키로 복호화
+                        let dec_key = private_key.decrypt(Pkcs1v15Encrypt, &recv_key_data).expect("failed to decrypt");
 
-                            // 키 데이터를 암호화에 맞는 형으로 변환
-                            let mut index = 0;
-                            for block in dec_key.iter() { // 배열에 블록 바이트 값 할당
-                                rsa_dec_aes_key[index] = *block;
-                                index = index + 1;
-                            }
-
-                            println!("dec_key :: {:?}, {:?}\n", dec_key, dec_key.len());
-                            println!("rsa_dec_aes_key :: {:?}, {:?}\n", rsa_dec_aes_key, rsa_dec_aes_key.len());
-
-                            // 서버에서 수신한 키로 수신용 복호화 AES 클래스 선언
-                            recv_cipher = Aes256::new(&rsa_dec_aes_key);
-                            // break;
+                        // 키 데이터를 암호화에 맞는 형으로 변환
+                        let mut index = 0;
+                        for block in dec_key.iter() { // 배열에 블록 바이트 값 할당
+                            rsa_dec_aes_key[index] = *block;
+                            index = index + 1;
                         }
-                    }
-                    Err(_) => {
-                        println!("error");
+
+                        println!("dec_key :: {:?}, {:?}\n", dec_key, dec_key.len());
+                        println!("rsa_dec_aes_key :: {:?}, {:?}\n", rsa_dec_aes_key, rsa_dec_aes_key.len());
+
+                        // 서버에서 수신한 키로 수신용 복호화 AES 클래스 선언
+                        recv_cipher = Aes256::new(&rsa_dec_aes_key);
+                        // break;
                     }
                 }
+                Err(_) => {
+                    println!("error");
+                }
+            }
             // }
             println!("Key distribution completed...");
 

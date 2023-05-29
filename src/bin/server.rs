@@ -38,15 +38,13 @@ fn main() {
     let listener = TcpListener::bind("0.0.0.0:3333").unwrap();
     println!("Server listening on port 3333");
 
-    // 키 생성
-    let key = GenericArray::from([0u8; 32]);
     let mut clients:Vec<TcpStream> = Vec::new();
 
     for mut stream in listener.incoming() {
         match stream {
             Ok(mut stream) => {
                 // 비동기 설정(스트림 읽기에서 블로킹 방지)
-                stream.set_nonblocking(true);
+                // stream.set_nonblocking(true);
 
                 // 클라이언트에서 입력하는 닉네임 데이터 수신
                 let mut nickname_data = [0 as u8; 1024];
@@ -58,24 +56,72 @@ fn main() {
                 }
 
                 // 접속한 클라이언트에 키 내려줌
-                stream.write(&key).unwrap(); // key send
-                stream.flush();
+                // stream.write(&key).unwrap(); // key send
+                // stream.flush();
 
                 let cloned_stream = stream.try_clone().unwrap();
                 clients.push(cloned_stream);
 
                 // 클라이언트가 모두 접속(2개) 하면 쓰레드 실행
                 if clients.len() == 2 {
+                    // 각 클라이언트에세 2명이 접속했다고 알림
+                    let key_sent = false;
+                    let client_data = vec![clients.len() as u8; 1];
+                    for mut _stream in clients.iter() {
+                        _stream.write_all(&client_data);
+                        _stream.flush();
+                    }
+
+                    // 공개키 교환
+                    println!("Public keys exchange");
+                    for _stream in clients.iter() {
+                        let mut __stream = _stream.try_clone().unwrap();
+                        let mut rsa_pub_data = vec![0 as u8; 294]; // 공개키 294 bytes
+
+                        match __stream.read(&mut rsa_pub_data) {
+                            Ok(size) => {
+                                println!("rsa_pub_data :: {:?}", rsa_pub_data);
+
+                                __stream.write_all(&rsa_pub_data);
+                                // __stream.flush();
+                            },
+                            Err(e) => {}
+                        };
+                    }
+
+
+
+                    // 각 클라이언트에서 RSA 공개키로 암호화 한 AES 키 교환
+                    println!("Encrypted secret keys exchange");
+                    for _stream in clients.iter() {
+                        let mut __stream = _stream.try_clone().unwrap();
+                        let mut enc_aes_data = vec![0 as u8; 256]; // RSA 2048 -> 8로 나누면 바이트 길이는 256
+
+                        match __stream.read(&mut enc_aes_data) {
+                            Ok(size) => {
+                                println!("rsa_pub_data :: {:?}", enc_aes_data);
+                                __stream.write_all(&enc_aes_data);
+                                // __stream.flush();
+                            },
+                            Err(e) => {}
+                        };
+                    }
+
+
+
                     // 클라이언트 TCP stream을 복제해서 스레드에서 실행할 수 있도록 전달
                     let mut cloned_clients = Vec::new();
 
                     for _stream in clients.iter() {
+                        _stream.set_nonblocking(true);
                         cloned_clients.push(_stream.try_clone().unwrap());
                     }
 
+                    // 데이터 송수신용 클라이언트 핸들링
                     thread::spawn(move || {
                         handle_client(cloned_clients);
                     });
+
                 }
 
                 drop(stream);
